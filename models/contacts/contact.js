@@ -1,10 +1,8 @@
 
-const mongoose = require('mongoose');
+const { Schema, model } = require('mongoose');
 const Joi = require('joi');
 
 const codeRegexp = /^\([0-9]{3}\)\s[0-9]{3}-[0-9]{4}$/;
-
-const { Schema, model } = mongoose;
 
 const contactSchema = Schema({
   name: {
