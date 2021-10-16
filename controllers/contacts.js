@@ -1,9 +1,13 @@
 const { NotFound, BadRequest } = require('http-errors');
+require('dotenv').config();
 
-const { Contact } = require('../../models/contacts');
+const { Contact } = require('../models');
 
-const listContacts = async (_, res) => {
-  const contacts = await Contact.find({}, '_id name email phone favorite');
+const listContacts = async (req, res) => {
+  const { page = 1, limit = 4, favorite = true } = req.query;
+  const skip = (page - 1) * limit;
+  const { _id } = req.user;
+  const contacts = await Contact.find({ owner: _id, favorite }, '_id name email phone favorite', { skip, limit: +limit }).populate('owner', 'email');
   res.json({
     status: 'success',
     code: 200,
@@ -15,7 +19,8 @@ const listContacts = async (_, res) => {
 
 const getContactById = async (req, res) => {
   const { contactId } = req.params;
-  const contact = await Contact.findOne({ _id: contactId }, '_id name email phone favorite');
+  const { _id } = req.user;
+  const contact = await Contact.findOne({ owner: _id, _id: contactId }, '_id name email phone favorite').populate('owner', 'email');
   if (!contact) {
     throw new NotFound(`Product with id ${contactId} not found`)
   }
@@ -27,7 +32,8 @@ const getContactById = async (req, res) => {
 };
 
 const addContact = async (req, res) => {
-  const result = await Contact.create(req.body);
+  const newContact = { ...req.body, owner: req.user._id };
+  const result = await Contact.create(newContact);
   res.status(201).json({
     status: 'success',
     code: 201,
@@ -39,7 +45,8 @@ const addContact = async (req, res) => {
 
 const removeContact = async (req, res) => {
   const { contactId } = req.params;
-  const result = await Contact.findByIdAndRemove({ _id: contactId });
+  const { _id } = req.user;
+  const result = await Contact.findOneAndRemove({ owner: _id, _id: contactId });
   if (!result) {
     throw new NotFound(`Product with id ${contactId} not found`)
   }
@@ -52,7 +59,8 @@ const removeContact = async (req, res) => {
 
 const updateById = async (req, res) => {
   const { contactId } = req.params;
-  const result = await Contact.findByIdAndUpdate(contactId, req.body, { new: true });
+  const { _id } = req.user;
+  const result = await Contact.findOneAndUpdate({ owner: _id, _id: contactId }, req.body, { new: true });
   if (!result) {
     throw new NotFound(`Product with id ${contactId} not found`)
   }
@@ -68,11 +76,12 @@ const updateById = async (req, res) => {
 const updateStatusContact = async (req, res) => {
   const { contactId } = req.params;
   const { favorite } = req.body;
+  const { _id } = req.user;
 
   if (typeof favorite === 'undefined') {
     throw new BadRequest('missing field favorite');
   }
-  const result = await Contact.findByIdAndUpdate(contactId, { favorite }, { new: true });
+  const result = await Contact.findOneAndUpdate({ owner: _id, _id: contactId }, { favorite }, { new: true });
   if (!result) {
     throw new NotFound(`Product with id ${contactId} not found`)
   }
