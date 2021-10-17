@@ -2,6 +2,8 @@ const { Schema, model } = require('mongoose');
 const Joi = require('joi');
 const bcrypt = require('bcryptjs');
 
+const emailRegExp = /^[-a-z0-9!#$%&'*+/=?^_`{|}~]+(.[-a-z0-9!#$%&'*+/=?^_`{|}~]+)*@([a-z0-9]([-a-z0-9]{0,61}[a-z0-9])?.)*(biz|com|gov|info|jobs|net|org|pro|[a-z][a-z])$/;
+
 const userSchema = Schema({
   password: {
     type: String,
@@ -12,6 +14,7 @@ const userSchema = Schema({
     type: String,
     required: [true, 'Email is required'],
     unique: true,
+    match: [emailRegExp, 'Please fill a valid email adress'],
   },
   subscription: {
     type: String,
@@ -33,13 +36,19 @@ userSchema.methods.comparePassword = function (password) {
 }
 
 const joiSchema = Joi.object({
-  email: Joi.string().email().required(),
+  email: Joi.string().pattern(emailRegExp).required(),
   password: Joi.string().min(6).required(),
+  subscription: Joi.string().valid('starter', 'pro', 'business'),
 });
+
+const subSchema = Joi.object({
+  subscription: Joi.string().valid('starter', 'pro', 'business'),
+})
 
 const User = model('user', userSchema);
 
 module.exports = {
   User,
   joiSchema,
+  subSchema,
 };
