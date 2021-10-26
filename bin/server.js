@@ -1,6 +1,5 @@
 const app = require('../app')
 const mongoose = require('mongoose')
-require('dotenv').config()
 
 const { DB_USER, DB_USER_PASS, DB_NAME, PORT = 3000 } = process.env;
 

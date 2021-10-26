@@ -1,5 +1,4 @@
 const { NotFound, BadRequest } = require('http-errors');
-require('dotenv').config();
 
 const { Contact } = require('../models');
 
